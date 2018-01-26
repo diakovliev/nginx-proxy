@@ -1,0 +1,41 @@
+version: "2"
+
+services:
+
+    nginx-proxy:
+        image: locs-proxy
+        ports:
+            - "80:80"
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+        networks:
+            - proxy-net
+            - whoami0-net
+            - whoami1-net
+
+    whoami0:
+        image: jwilder/whoami
+        environment:
+            - VIRTUAL_HOST=whoami0
+            - VIRTUAL_PORT=8000
+            - CUSTOM_LOCATION=whoami
+        networks:
+            - proxy-net
+            - whoami0-net
+
+    whoami1:
+        image: jwilder/whoami
+        environment:
+            - VIRTUAL_HOST=whoami1
+            - VIRTUAL_PORT=8000
+        networks:
+            - proxy-net
+            - whoami1-net
+
+networks:
+    proxy-net:
+        driver: bridge
+    whoami0-net:
+        driver: bridge
+    whoami1-net:
+        driver: bridge
