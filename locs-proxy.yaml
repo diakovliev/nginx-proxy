@@ -8,6 +8,8 @@ services:
             - "80:80"
         volumes:
             - /var/run/docker.sock:/tmp/docker.sock:ro
+        environment:
+            - ROOT_LOCATION=http://whoami0:8000
         networks:
             - proxy-net
             - whoami0-net

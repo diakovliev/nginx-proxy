@@ -67,6 +67,7 @@ proxy_set_header Proxy "";
 {{ end }}
 
 {{ $enable_ipv6 := eq (or ($.Env.ENABLE_IPV6) "") "true" }}
+{{ $root_location := trim (coalesce $.Env.ROOT_LOCATION "") }}
 
 server {
 	server_name localhost;
@@ -88,6 +89,17 @@ server {
 	ssl_certificate_key /etc/nginx/certs/default.key;
 {{ end }}
 
+	location / {
+{{ if (eq $root_location "") }}
+		return 404;
+{{ else }}
+		proxy_pass {{ $root_location }};
+		{{ if (exists "/etc/nginx/conf.d/root_location") }}
+		include /etc/nginx/conf.d/root_location;
+		{{ end }}
+{{ end }}
+	}
+
 {{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_HOST" "," }}
 
 {{ $host := trim $host }}
@@ -103,10 +115,10 @@ server {
 
 	location /{{ $location }}/ {
 		proxy_pass {{ $proto }}://{{ $host }}:{{ $port }};
-		{{ if (exists (printf "/etc/nginx/vhost.d/%s_location" $host)) }}
-		include {{ printf "/etc/nginx/vhost.d/%s_location" $host}};
-		{{ else if (exists "/etc/nginx/vhost.d/default_location") }}
-		include /etc/nginx/vhost.d/default_location;
+		{{ if (exists (printf "/etc/nginx/conf.d/%s_location" $host)) }}
+		include {{ printf "/etc/nginx/conf.d/%s_location" $host}};
+		{{ else if (exists "/etc/nginx/conf.d/default_location") }}
+		include /etc/nginx/conf.d/default_location;
 		{{ end }}
 	}
 
